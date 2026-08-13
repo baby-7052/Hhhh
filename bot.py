@@ -50,42 +50,42 @@ async def start(client, message: Message):
     await message.reply(text, reply_markup=reply_markup, quote=True)
 
 
-# Handle New Member Welcome & Auto-Ban on Leave
+# Handle Member Join & Auto-Ban on Leave
 @bot.on_chat_member_updated()
 async def handle_chat_member_updated(client, event: ChatMemberUpdated):
     try:
         chat_id = event.chat.id
         
-        # 1. အဖွဲ့ဝင်အသစ် ဝင်လာသောအခါ (Welcome Message with Rules)
-        if event.new_chat_member and event.new_chat_member.status == enums.ChatMemberStatus.MEMBER:
-            # Bot ကိုယ်တိုင် ဝင်လာတာ မဟုတ်ရင်
+        # 1. အဖွဲ့ဝင်အသစ် ဝင်လာသောအခါ Welcome ပို့ရန်
+        if event.new_chat_member and event.new_chat_member.status in [enums.ChatMemberStatus.MEMBER, enums.ChatMemberStatus.ADMINISTRATOR]:
             if event.new_chat_member.user.id != client.me.id:
-                user = event.new_chat_member.user
-                chat = event.chat
-                
-                # User Mention ဖန်တီးရန်
-                user_mention = f"[{user.first_name}](tg://user?id={user.id})"
-                
-                welcome_text = (
-                    f"╭━━━❖ 𝙒𝙀𝙇𝘾𝙊𝙈𝙀 ❖━━━╮\n\n"
-                    f"👋 မင်္ဂလာပါ {user_mention} ခင်ဗျာ။\n"
-                    f"✨ **{chat.title}** မှ နွေးထွေးစွာ ကြိုဆိုပါတယ် ✨\n\n"
-                    f"📌 **အသိပေးချက် & စည်းကမ်းချက်များ:**\n"
-                    f"• အချင်းချင်း လေးစားစွာ နေထိုင်ပေးပါ။\n"
-                    f"• ⚠️ *ဤအုပ်စုမှ မိမိဆန္ဒအလျောက် ထွက်သွားပါက စနစ်အရ အလိုအလျောက် Ban (ပိတ်ပင်) ခံရမည်ဖြစ်ပါကြောင်း \n ယဉ်ကျေးစွာ အသိပေးအပ်ပါသည်။*\n\n"
-                    f"╰━━━━━━━━━━━━━━━╯"
-                )
-                
-                await client.send_message(chat_id, welcome_text)
+                if not event.old_chat_member or event.old_chat_member.status in [enums.ChatMemberStatus.LEFT, enums.ChatMemberStatus.BANNED]:
+                    user = event.new_chat_member.user
+                    chat = event.chat
+                    
+                    user_mention = f"[{user.first_name}](tg://user?id={user.id})"
+                    
+                    welcome_text = (
+                        f"╭━━━❖ 𝙒𝙀𝙇𝘾𝙊𝙈𝙀 ❖━━━╮\n\n"
+                        f"👋 မင်္ဂလာပါ {user_mention} ခင်ဗျာ။\n"
+                        f"✨ **{chat.title}** မှ နွေးထွေးစွာ ကြိုဆိုပါတယ် ✨\n\n"
+                        f"📌 **အသိပေးချက် & စည်းကမ်းချက်များ:**\n"
+                        f"• အချင်းချင်း လေးစားစွာ နေထိုင်ပေးပါ။\n"
+                        f"• ⚠️ *ဤအုပ်စုမှ မိမိဆန္ဒအလျောက် ထွက်သွားပါက စနစ်အရ အလိုအလျောက် Ban (ပိတ်ပင်) ခံရမည်ဖြစ်ပါကြောင်း \n ယဉ်ကျေးစွာ အသိပေးအပ်ပါသည်။*\n\n"
+                        f"╰━━━━━━━━━━━━━━━╯"
+                    )
+                    
+                    await client.send_message(chat_id, welcome_text)
 
-        # 2. အဖွဲ့ဝင် ထွက်သွားသောအခါ (Auto-Ban on Leave)
+        # 2. အဖွဲ့ဝင် ထွက်သွားသည်နှင့် ချက်ချင်း Ban ရန် (Auto-Ban on Leave)
         if event.new_chat_member and event.new_chat_member.status == enums.ChatMemberStatus.LEFT:
             left_user = event.new_chat_member.user
             
             # Bot ကိုယ်တိုင် မဟုတ်မှသာ
             if left_user and left_user.id != client.me.id:
+                # အဖွဲ့ဝင်ကို ချက်ချင်း Ban မည်
                 await client.ban_chat_member(chat_id, left_user.id)
-                print(f"✅ Banned Left User: {left_user.id} ({left_user.first_name}) in Chat: {chat_id}")
+                print(f"✅ Auto-Banned Left User: {left_user.id} ({left_user.first_name}) in Chat: {chat_id}")
                 
     except Exception as e:
         print(f"❌ Error in handle_chat_member_updated: {e}")
